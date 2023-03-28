@@ -4,6 +4,7 @@ from amaranth.hdl.rec import *
 from amaranth.utils import log2_int
 
 from minerva.core import Minerva
+from amaranth.cli import main_parser, main_runner
 
 # Memory
 
@@ -181,66 +182,35 @@ class SOC(Elaboratable):
 
         return m
 
-class MemMaster(Elaboratable):
-
-    def __init__(self, width, depth, init):
-        self.imem = Wishbone_RAM(depth=depth, init=init)
-        self.ibus = Record(wishbone_layout)
-        self.en = Signal(1)
-        self.addr = Signal(range(depth/4))
-        self.wr_en = Signal(1)
-        self.r_data = Signal(width)
-        self.w_data = Signal(width)
-        self.dummy =Signal(1)
-
-
-    def elaborate(self, platform):
-        m = Module()
-        
-        m.submodules.imem = self.imem
-
-        m.d.comb += [
-            self.r_data.eq(self.ibus.dat_r),
-            self.ibus.dat_w.eq(self.w_data),
-            self.ibus.connect(self.imem.wbus),
-            self.ibus.cyc.eq(self.en),
-            self.ibus.stb.eq(self.en),
-            self.ibus.adr.eq(self.addr),
-            self.ibus.we.eq(self.wr_en)
-        ]
-
-        m.d.sync += [
-            self.dummy.eq(1)
-        ]
-
-        return m
 
 mem_w = 4
 mem_d = 2**5
 
-mem_init = []
-
-for i in range(32):
-    mem_init.append(i%2**4)
-
-
 dut = SOC(init_instr=init_instr, init_data=init_data)
 
-def test_mem():
+def run_simulation():
 
-    # yield dut.addr.eq(0b00001); yield dut.en.eq(1); yield dut.wr_en.eq(0)
-    # for _ in range(1):
-    #     yield
-    # yield dut.en.eq(0)
-    # yield
+    mem_init = []
 
-    for i in range(30):
-        yield
+    for i in range(32):
+        mem_init.append(i%2**4)
 
 
-sim = Simulator(dut)
-sim.add_clock(1e-6)
-sim.add_sync_process(test_mem)
 
-with sim.write_vcd("test_mem.vcd"):
-    sim.run()
+    def test_mem():
+        for i in range(30):
+            yield
+
+
+    sim = Simulator(dut)
+    sim.add_clock(1e-6)
+    sim.add_sync_process(test_mem)
+
+    with sim.write_vcd("test_mem.vcd"):
+        sim.run()
+
+def main(*args, **kwargs):
+    parser = main_parser()
+    main_runner(parser, parser.parse_args(), *args, **kwargs)
+
+main(dut)
