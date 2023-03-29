@@ -12,3 +12,7 @@ __pycache__/
 *.il
 *.v
 /build
+
+**/isa/rv32[a-za-z]*
+
+

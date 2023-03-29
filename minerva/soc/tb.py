@@ -6,6 +6,8 @@ from amaranth.utils import log2_int
 from minerva.core import Minerva
 from amaranth.cli import main_parser, main_runner
 
+import subprocess
+
 # Memory
 
 mem_layout = [
@@ -34,8 +36,8 @@ class RWB:
 
 init_instr = [
     0x00000013,
-    0x00000013,
-    0x00000013
+    0x00000016,
+    0x00000019
 ]
 
 init_data = []
@@ -101,8 +103,8 @@ class Wishbone_RAM(Elaboratable):
         raddr = Signal(32)
 
         m.d.comb += [
-            waddr.eq(adr_r[2:32]), # Registered addr
-            raddr.eq(self.wbus.adr[2:32]) # Current addr
+            waddr.eq(adr_r[0:32]), # Registered addr
+            raddr.eq(self.wbus.adr[0:32]) # Current addr
         ]
 
         we = Signal(4)
@@ -149,14 +151,14 @@ class Wishbone_RAM(Elaboratable):
 
 class SOC(Elaboratable):
 
-    def __init__(self, init_instr, init_data):
+    def __init__(self, init_instr=None, init_data=None, *args, **kwargs):
         self.imem = Wishbone_RAM(32, init_instr)
         self.dmem = Wishbone_RAM(32, init_data)
         self.s_intr = Signal()
         self.t_intr = Signal()
         self.ext_intr = Signal(32)
 
-        self.core = Minerva()
+        self.core = Minerva(*args, **kwargs)
 
         self.dummy = Signal()
 
@@ -186,7 +188,7 @@ class SOC(Elaboratable):
 mem_w = 4
 mem_d = 2**5
 
-dut = SOC(init_instr=init_instr, init_data=init_data)
+dut = SOC(init_instr=init_instr, init_data=init_data, reset_address=0x80000000)
 
 def run_simulation():
 
@@ -209,8 +211,38 @@ def run_simulation():
     with sim.write_vcd("test_mem.vcd"):
         sim.run()
 
-def main(*args, **kwargs):
-    parser = main_parser()
-    main_runner(parser, parser.parse_args(), *args, **kwargs)
 
-main(dut)
+run_simulation()
+
+# class TestBench:
+
+#     XLEN = 32
+
+#     def __init__(self, bin_file=None):
+#         self.dut = SOC()
+#         self._fbin = bin_file
+#         self._sim = Simulator(self.dut)
+#         self._imem = []
+
+        
+#     def run_simulation(self):
+#         pass
+        
+# def main():
+
+#     tb = TestBench()
+#     tb.run_simulation()
+
+# if __name__ == '__main__':
+
+
+
+
+#     main()
+
+
+# def main(*args, **kwargs):
+#     parser = main_parser()
+#     main_runner(parser, parser.parse_args(), *args, **kwargs)
+
+# main(dut)

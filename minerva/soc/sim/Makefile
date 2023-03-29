@@ -1,3 +1,1 @@
-TOP := soc
-CONFIG := default
-
+RISV_TESTS = riscv_tests/isa
