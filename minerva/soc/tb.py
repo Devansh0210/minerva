@@ -7,6 +7,7 @@ from minerva.core import Minerva
 from amaranth.cli import main_parser, main_runner
 
 import subprocess
+from gen_instr import gen_imem
 
 # Memory
 
@@ -34,14 +35,9 @@ class RWB:
     WRITE = 1
 
 
-init_instr = [
-    0x00000013,
-    0x00000016,
-    0x00000019
-]
+init_instr = gen_imem("/home/devector/Documents/riscv/minerva/minerva/soc/sim/riscv-tests/isa/rv32ui-p-andi.bin")
 
-init_data = []
-
+init_data = [0 for i in range(32*1024)]
 
 # wishbone_layout = [
 #     ("adr",   32, DIR_FANOUT),
@@ -152,8 +148,8 @@ class Wishbone_RAM(Elaboratable):
 class SOC(Elaboratable):
 
     def __init__(self, init_instr=None, init_data=None, *args, **kwargs):
-        self.imem = Wishbone_RAM(32, init_instr)
-        self.dmem = Wishbone_RAM(32, init_data)
+        self.imem = Wishbone_RAM(2048, init_instr)
+        self.dmem = Wishbone_RAM(2048, init_data)
         self.s_intr = Signal()
         self.t_intr = Signal()
         self.ext_intr = Signal(32)
@@ -192,10 +188,7 @@ dut = SOC(init_instr=init_instr, init_data=init_data, reset_address=0x80000000)
 
 def run_simulation():
 
-    mem_init = []
-
-    for i in range(32):
-        mem_init.append(i%2**4)
+    # mem_init = gen_imem("/home/devector/Documents/riscv/minerva/minerva/soc/sim/riscv-tests/isa/rv32ui-p-andi.bin")
 
 
 

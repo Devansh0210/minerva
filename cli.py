@@ -1,8 +1,11 @@
 import argparse
 import warnings
 from amaranth import cli
-
+from minerva.utils import get_sig_info
 from minerva.core import Minerva
+from rich.console import Console
+
+c = Console()
 
 
 def main():
@@ -111,6 +114,9 @@ def main():
             cpu.rvfi.mem_wmask, cpu.rvfi.mem_rdata, cpu.rvfi.mem_wdata
         ]
 
+
+
+    c.print(get_sig_info(ports))
     cli.main_runner(parser, args, cpu, name="minerva_cpu", ports=ports)
 
 
