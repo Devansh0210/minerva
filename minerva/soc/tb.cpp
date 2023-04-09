@@ -15,7 +15,7 @@ static const uint32_t IO_BASE = 0x80000000;
 class memio{
 
 	public:
-		uint8_t* mem;
+		uint8_t mem[MEM_SIZE];
 		bool valid;
 		
 	void load_bin(const char* bin_path){
@@ -68,31 +68,67 @@ int main(int argc, char** argv){
 	top->trace(m_trace, 1);
 	m_trace->open("wave.vcd");
 
+	uint64_t cyc = 0;
+
 	top->rst = 1;
 	top->clk = 0;
 	top->eval();
+	m_trace->dump(cyc);
+	cyc++;
 
 	uint64_t max_cycles = 10;
 
 	top->rst = 1;
 	top->eval();
+	// m_trace->dump(cyc);
+	// cyc++;
+	memio memio_i;
+	memio_i.load_bin("sim/isa/rv32ui-p-and.bin");
 	
 	top->clk = 1;
 	top->eval();
+	m_trace->dump(cyc);
+	cyc++;
 
 	top->clk = 0;
 	top->rst = 0;
 	top->eval();
+	m_trace->dump(cyc);
+	// cyc++;
+	// cyc = (cyc + 1)/2;
+	cyc = 2;
 
-	for(uint64_t cyc = 0; cyc < max_cycles; cyc++){
+	for(; cyc < max_cycles; cyc++){
 		top->clk = 0;
 		top->eval();
 		m_trace->dump(2*cyc);
 
-		top->clk = 1;
+		// if(top->ibus___05Fack){
+		// 	top->ibus___05Fack = 0;
+		// }
+
+
+		top->clk = 1;		
 		top->eval();
+
+		if(top->ibus___05Fstb && top->ibus___05Fcyc){
+			// Reading from memory
+			if(!top->ibus___05Fwe){
+				top->ibus___05Fdat_r = memio_i.read_mem(top->ibus___05Fadr);
+			}
+			else{
+				memio_i.write_mem(top->ibus___05Fadr, top->ibus___05Fdat_w);
+			}
+			
+
+			// top->ibus___05Fack = !top->ibus___05Fack;
+		}
+
+		top->eval();
+
 		m_trace->dump(2*cyc + 1);
 	}
+
 
 	delete top;
 	delete m_trace;

@@ -26,5 +26,6 @@ tb: veri tb.cpp
 	verilator --trace --Mdir $(BUILD) --cc $(TOP_F) --top-module $(basename $(TOP_F))_cpu --exe tb.cpp --Wno-WIDTHEXPAND --Wno-WIDTHTRUNC -Wno-CASEINCOMPLETE -Wno-CASEOVERLAP
 	make -C $(BUILD) -f V$(basename $(TOP_F))_cpu.mk V$(basename $(TOP_F))_cpu
 	./$(BUILD)/V$(TOPLEVEL)
+	python3 ./mod_vcd.py -i "wave.vcd" -o "wave.vcd"
 	
 
